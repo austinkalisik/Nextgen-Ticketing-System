@@ -52,3 +52,26 @@
 3. User creates or edits a ticket using the service-aware form.
 4. Status changes automatically add an activity event through the API.
 5. User adds manual support updates to the ticket activity timeline.
+6. Admin updates company support details and dashboard profile photo from Settings.
+
+## Settings Workflow
+
+```text
++------------------------------------------------+
+| Company & Profile Settings                     |
+| Profile photo preview | Change Profile Pic     |
+| Company, website, support email, support phone |
+| Profile name, role, office address             |
+| Save Settings                                  |
++------------------------------------------------+
+| System Status                                  |
+| Laravel API | Database | Frontend Assets       |
+| Refresh Data | Website                         |
++------------------------------------------------+
+```
+
+## Validation Rules
+
+- Ticket due dates are limited to four-digit years from 1900 through 9999.
+- Ticket numbers are generated from the latest stored yearly sequence to avoid duplicates.
+- Settings require valid website and support email values before saving.

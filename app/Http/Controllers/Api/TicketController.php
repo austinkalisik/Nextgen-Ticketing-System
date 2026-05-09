@@ -112,14 +112,20 @@ class TicketController extends Controller
             'category' => [$required, 'string', 'max:255'],
             'priority' => [$required, Rule::in(['low', 'medium', 'high', 'urgent'])],
             'status' => [$required, Rule::in(['open', 'in_progress', 'waiting', 'resolved', 'closed'])],
-            'due_date' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:1900-01-01', 'before_or_equal:9999-12-31'],
         ]);
     }
 
     private function nextTicketNumber(): string
     {
-        $count = Ticket::count() + 1;
+        $year = now()->format('Y');
+        $latest = Ticket::query()
+            ->where('ticket_number', 'like', "NGT-{$year}-%")
+            ->orderByDesc('ticket_number')
+            ->value('ticket_number');
 
-        return 'NGT-'.now()->format('Y').'-'.str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+        $count = $latest ? ((int) substr($latest, -4)) + 1 : 1;
+
+        return "NGT-{$year}-".str_pad((string) $count, 4, '0', STR_PAD_LEFT);
     }
 }

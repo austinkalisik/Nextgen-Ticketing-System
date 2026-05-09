@@ -2,10 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\SystemSetting;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,10 +20,21 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            ['name' => 'Test User', 'password' => Hash::make('password')]
+        );
+
+        collect([
+            'company_name' => 'Nextgen Technology Limited',
+            'website_url' => 'https://nextgenpng.net/',
+            'support_email' => 'support@nextgenpng.net',
+            'support_phone' => '+675 325 2023',
+            'office_address' => 'Mutual Rumana Building Waigani, Port Moresby',
+            'profile_name' => 'Nextgen Support Desk',
+            'profile_role' => 'Service Operations',
+            'profile_photo' => '',
+        ])->each(fn (string $value, string $key): SystemSetting => SystemSetting::updateOrCreate(['key' => $key], ['value' => $value]));
 
         collect([
             [
@@ -104,13 +117,18 @@ class DatabaseSeeder extends Seeder
                 'due_date' => now()->addDays(2)->toDateString(),
             ],
         ])->each(function (array $data): void {
-            $ticket = Ticket::create($data);
+            $ticket = Ticket::updateOrCreate(
+                ['ticket_number' => $data['ticket_number']],
+                $data
+            );
 
-            $ticket->comments()->create([
-                'author_name' => 'System',
-                'body' => 'Seed ticket created.',
-                'event_type' => 'created',
-            ]);
+            if (! $ticket->comments()->exists()) {
+                $ticket->comments()->create([
+                    'author_name' => 'System',
+                    'body' => 'Seed ticket created.',
+                    'event_type' => 'created',
+                ]);
+            }
         });
     }
 }

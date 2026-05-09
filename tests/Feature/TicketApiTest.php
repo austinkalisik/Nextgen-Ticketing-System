@@ -70,4 +70,59 @@ class TicketApiTest extends TestCase
 
         $this->assertNotNull($ticket->refresh()->resolved_at);
     }
+
+    public function test_ticket_due_date_requires_four_digit_year(): void
+    {
+        $this->postJson('/api/tickets', [
+            'title' => 'Bad due date',
+            'description' => 'Date has too many year digits.',
+            'requester_name' => 'Ari Tuma',
+            'requester_email' => 'ari.tuma@example.com',
+            'category' => 'Email Support',
+            'priority' => 'high',
+            'status' => 'open',
+            'due_date' => '111111-11-11',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('due_date');
+    }
+
+    public function test_ticket_number_continues_after_deleted_ticket(): void
+    {
+        Ticket::create([
+            'ticket_number' => 'NGT-'.now()->format('Y').'-0006',
+            'title' => 'Existing ticket',
+            'description' => 'Ticket that should remain.',
+            'requester_name' => 'Kai Moa',
+            'requester_email' => 'kai.moa@example.com',
+            'category' => 'Domain Hosting',
+            'priority' => 'medium',
+            'status' => 'open',
+        ]);
+
+        $ticket = Ticket::create([
+            'ticket_number' => 'NGT-'.now()->format('Y').'-0007',
+            'title' => 'Old ticket',
+            'description' => 'Ticket that will be deleted.',
+            'requester_name' => 'Kai Moa',
+            'requester_email' => 'kai.moa@example.com',
+            'category' => 'Domain Hosting',
+            'priority' => 'medium',
+            'status' => 'open',
+        ]);
+
+        $ticket->delete();
+
+        $this->postJson('/api/tickets', [
+            'title' => 'New ticket',
+            'description' => 'Ticket should use the next available number.',
+            'requester_name' => 'Ari Tuma',
+            'requester_email' => 'ari.tuma@example.com',
+            'category' => 'Email Support',
+            'priority' => 'high',
+            'status' => 'open',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('ticket_number', 'NGT-'.now()->format('Y').'-0007');
+    }
 }
